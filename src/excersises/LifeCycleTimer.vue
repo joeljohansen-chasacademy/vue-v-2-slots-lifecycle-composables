@@ -20,7 +20,7 @@ Methods för start, pause, reset
 Conditional rendering (v-if)
 -->
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 
 const initialTime = ref(10)
 const timeLeft = ref(10)
@@ -30,68 +30,158 @@ const showTimer = ref(true)
 
 let intervalId = null
 
-// TODO: Lägg till funktioner här
-// Tips: Du behöver funktioner för att:
-// - Starta timern (setInterval som minskar timeLeft varje sekund)
-// - Pausa timern
-// - Resetta timern
-// - Stoppa timern helt (clearInterval)
+const clearTimer = () => {
+	if (intervalId) {
+		clearInterval(intervalId)
+		intervalId = null
+	}
+}
 
-// TODO: Använd onMounted här
-// Tips: Du kan till exempel logga att komponenten är monterad
-// eller starta timern automatiskt
+const tick = () => {
+	if (timeLeft.value > 0) {
+		timeLeft.value -= 1
+	} else {
+		stopTimer()
+	}
+}
 
-// TODO: Använd onUnmounted här
-// Tips: VIKTIGT! Rensa interval här för att undvika memory leaks
-// Använd clearInterval(intervalId)
+const startTimer = () => {
+	if (isRunning.value && !isPaused.value) return
+	if (timeLeft.value <= 0) {
+		timeLeft.value = initialTime.value
+	}
+	isRunning.value = true
+	isPaused.value = false
+	clearTimer()
+	intervalId = setInterval(tick, 1000)
+}
 
+const pauseTimer = () => {
+	if (!isRunning.value) return
+	isPaused.value = true
+	clearTimer()
+}
+
+const stopTimer = () => {
+	isRunning.value = false
+	isPaused.value = false
+	clearTimer()
+}
+
+const resetTimer = () => {
+	stopTimer()
+	timeLeft.value = Number(initialTime.value) || 0
+}
+
+watch(
+	initialTime,
+	(newValue) => {
+		// Om användaren ändrar starttid och timern är stoppad vill vi spegla värdet direkt
+		if (!isRunning.value) {
+			timeLeft.value = Number(newValue) || 0
+		}
+	},
+	{ immediate: true }
+)
+
+onMounted(() => {
+	// Starta timern direkt för att visa lifecycle-hook i action
+	startTimer()
+})
+
+onUnmounted(() => {
+	// Viktigt att städa upp när komponenten tas bort
+	clearTimer()
+})
 </script>
 
 <template>
-  <div>
-    <h1>Countdown Timer</h1>
-    
-    <button @click="showTimer = !showTimer">
-      Visa/Dölj Timer (Testa cleanup!)
-    </button>
-    
-    <!-- TODO: Timer-komponent som kan döljas -->
-    <!-- Tips: Använd v-if="showTimer" -->
-    <div v-if="showTimer">
-      
-      <!-- TODO: Input för att sätta initial tid -->
-      <div>
-        <label>Starttid (sekunder):</label>
-        <input type="number" placeholder="10">
-      </div>
-      
-      <!-- TODO: Visa återstående tid -->
-      <div>
-        <h2><!-- Visa timeLeft här --></h2>
-      </div>
-      
-      <!-- TODO: Start/Pause/Reset knappar -->
-      
-      <!-- TODO: Visa meddelande när timer når 0 -->
-      <!-- Tips: Använd v-if="timeLeft === 0" -->
-      
-    </div>
-  </div>
+	<div>
+		<h1>Countdown Timer</h1>
+
+		<button @click="showTimer = !showTimer">
+			Visa/Dölj Timer (Testa cleanup!)
+		</button>
+
+		<div v-if="showTimer" class="timer-card">
+			<div class="input-row">
+				<label for="start-time">Starttid (sekunder):</label>
+				<input
+					id="start-time"
+					type="number"
+					min="0"
+					v-model.number="initialTime"
+					placeholder="10"
+				/>
+				<button @click="resetTimer">Uppdatera</button>
+			</div>
+
+			<div class="timer-display">
+				<h2>{{ timeLeft }}s</h2>
+				<p v-if="timeLeft === 0" class="timer-finished">Tiden är slut!</p>
+			</div>
+
+			<div class="actions">
+				<button @click="startTimer" :disabled="isRunning && !isPaused">Starta</button>
+				<button @click="pauseTimer" :disabled="!isRunning">Pausa</button>
+				<button @click="resetTimer">Reset</button>
+				<button @click="stopTimer" :disabled="!isRunning">Stoppa</button>
+			</div>
+
+			<p class="status-text">
+				Status:
+				<span v-if="isRunning && !isPaused">Kör…</span>
+				<span v-else-if="isPaused">Pausad</span>
+				<span v-else>Stoppad</span>
+			</p>
+		</div>
+	</div>
 </template>
 
 <style scoped>
+.timer-card {
+	margin-top: 1.5rem;
+	padding: 1.5rem;
+	border: 1px solid #e0e0e0;
+	border-radius: 0.75rem;
+	background: #fafafa;
+	max-width: 480px;
+}
+
+.input-row {
+	display: flex;
+	gap: 0.5rem;
+	align-items: center;
+	flex-wrap: wrap;
+}
+
 .timer-display {
-  font-size: 3rem;
-  font-weight: bold;
-  margin: 2rem 0;
-  color: #2c3e50;
+	font-size: 3rem;
+	font-weight: bold;
+	margin: 2rem 0;
+	color: #2c3e50;
+	text-align: center;
 }
 
 .timer-finished {
-  color: #e74c3c;
-  font-size: 1.5rem;
-  font-weight: bold;
+	color: #e74c3c;
+	font-size: 1.5rem;
+	font-weight: bold;
 }
 
-/* TODO: Lägg till fler styles om du vill */
+.actions {
+	display: flex;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+}
+
+.actions button:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.status-text {
+	margin-top: 1rem;
+	font-style: italic;
+}
 </style>

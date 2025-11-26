@@ -19,43 +19,117 @@ v-if för att visa/dölja modal
 -->
 <script setup>
 import { ref } from 'vue'
+import BaseModal from '../components/BaseModal.vue'
 
-const isOpen = ref(false)
+const showDeleteModal = ref(false)
+const showDetailsModal = ref(false)
 
-// TODO: Lägg till funktioner här
-// Tips: Du behöver funktioner för att:
-// - Öppna modal
-// - Stänga modal
+const openDeleteModal = () => {
+	showDeleteModal.value = true
+}
 
+const openDetailsModal = () => {
+	showDetailsModal.value = true
+}
+
+const closeDeleteModal = () => {
+	showDeleteModal.value = false
+}
+
+const closeDetailsModal = () => {
+	showDetailsModal.value = false
+}
 </script>
 
 <template>
-  <div>
-    <h1>Modal-komponent övning</h1>
-    
-    <!-- TODO: Button för att öppna modal -->
-    
-    <!-- TODO: Modal-komponent -->
-    <!-- Tips: Skapa en modal med:
-         - En backdrop (mörk overlay)
-         - En modal-box i mitten
-         - Named slots för header, body och footer
-         - Stäng-knapp (X)
-    -->
-    
-    <!-- TODO: Använd modal på två olika sätt -->
-    <!-- Exempel 1: "Radera användare?" med Ja/Nej knappar -->
-    <!-- Exempel 2: "Visa detaljer" med info och OK-knapp -->
-    
-  </div>
+	<div>
+		<h1>Modal-komponent övning</h1>
+
+		<div class="button-group">
+			<button @click="openDeleteModal" class="primary-btn">Öppna radera-modal</button>
+			<button @click="openDetailsModal" class="secondary-btn">Öppna detalj-modal</button>
+		</div>
+
+		<!-- Exempel 1: Radera användare -->
+		<BaseModal v-if="showDeleteModal" @close="closeDeleteModal">
+			<template #header>
+				<h3>Radera användare?</h3>
+			</template>
+
+			<p>Är du säker på att du vill radera den här användaren? Detta går ej att ångra.</p>
+
+			<template #footer>
+				<button class="modal-btn danger" @click="closeDeleteModal">Radera</button>
+				<button class="modal-btn ghost" @click="closeDeleteModal">Avbryt</button>
+			</template>
+		</BaseModal>
+
+		<!-- Exempel 2: Visa detaljer -->
+		<BaseModal v-if="showDetailsModal" @close="closeDetailsModal">
+			<template #header>
+				<h3>Detaljer om beställning</h3>
+			</template>
+
+			<ul>
+				<li>Ordernummer: #12345</li>
+				<li>Kund: Anna Svensson</li>
+				<li>Summa: 1 299 kr</li>
+			</ul>
+
+			<template #footer>
+				<button class="modal-btn primary" @click="closeDetailsModal">OK</button>
+			</template>
+		</BaseModal>
+	</div>
 </template>
 
 <style scoped>
-/* TODO: Lägg till styling för modal */
-/* Tips: Du behöver style för:
-   - .modal-backdrop (täcker hela skärmen, mörk bakgrund)
-   - .modal-box (vit box i mitten)
-   - .modal-header, .modal-body, .modal-footer
-   - .close-button (X-knapp i hörnet)
-*/
+.button-group {
+	display: flex;
+	gap: 1rem;
+	margin: 1.5rem 0;
+	flex-wrap: wrap;
+}
+
+.primary-btn,
+.secondary-btn {
+	padding: 0.75rem 1.5rem;
+	border-radius: 0.5rem;
+	border: none;
+	cursor: pointer;
+	font-size: 1rem;
+}
+
+.primary-btn {
+	background: #42b983;
+	color: white;
+}
+
+.secondary-btn {
+	background: #f0f0f0;
+	color: #333;
+}
+
+.modal-btn {
+	padding: 0.5rem 1rem;
+	border-radius: 0.4rem;
+	border: none;
+	cursor: pointer;
+}
+
+.modal-btn.danger {
+	background: #e74c3c;
+	color: white;
+}
+
+.modal-btn.ghost {
+	background: transparent;
+	color: #333;
+	border: 1px solid #ddd;
+}
+
+.modal-btn.primary {
+	background: #42b983;
+	color: white;
+}
 </style>
